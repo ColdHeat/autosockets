@@ -42,7 +42,7 @@ class socket:
         self.s.connect((addr, port))
         self.s.settimeout(timeout)
 
-    def recv(self, end='\n', regex = False):
+    def recv(self, regex=False, end='\n'):
         total=[]
         data='\n'
         while data != "":
