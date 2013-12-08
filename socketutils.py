@@ -1,37 +1,35 @@
 import re
 
-def __valid(addr):
-	return (len(addr) == 4 and all(quad <= 255 and quad >= 0 for quad in addr))
+def wildcard(addr):
+	'''
+	Return a generator for ip addresses with wildcards in them
+	Ex: wildcard('1.1.1.*')
 
-def __confirm():
-	tmp = 'n'
-	while True:
-		inp = raw_input('Generating large amount of IP Addresses. Are you sure you want to continue? [y/N] ')
-		if inp != '':
-			tmp = inp.lower()
+	'''
+	addr = [[int(x)] if x != "*" else "*" for x in addr.split('.')]
 
-		if tmp not in ['y', 'n']:
-			print 'Invalid option'
-			continue
+	for x in xrange(len(addr)):
+		if addr[x] == '*':
+			addr[x] = range(256)
 
-		return False if tmp == 'n' else True
+	for a in addr[0]:
+		for b in addr[1]:
+			for c in addr[2]:
+				for d in addr[3]:
+					yield "{}.{}.{}.{}".format(a,b,c,d)
 
-## http://cmikavac.net/2011/09/11/how-to-generate-an-ip-range-list-in-python/
-# Return a list of IP Addresses from start_ip until end_ip
-def ipRange(start_ip, end_ip):
-	start = list(map(int, start_ip.split(".")))
-	end = list(map(int, end_ip.split(".")))
+def ip_range(range):
+	'''
+	http://cmikavac.net/2011/09/11/how-to-generate-an-ip-range-list-in-python/
+	Return a generator for ip addresses in the range 
+	Ex: ip_range('1.1.1.1 - 1.1.1.255')
 
-	if not __valid(start):
-		raise Exception('Invalid Start IP Address')
+	'''
+	addr = range.split('-')
+	start = list(map( int, addr[0].strip().split('.') ) )
+	end = list(map( int, addr[1].strip().split('.') ) )
 
-	if not __valid(end):
-		raise Exception('Invalid End IP Address')
-
-	for i in range(4):
-		if start[i] > end[i]:
-			start, end = end, start
-			break
+	start[3] = start[3]-1
 
 	temp = start
 	ip_range = []
@@ -43,22 +41,15 @@ def ipRange(start_ip, end_ip):
 			if temp[i] == 256:
 				temp[i] = 0
 				temp[i-1] += 1
-		ip_range.append(".".join(map(str, temp)))
-	  
-	return ip_range
+		yield ".".join(map(str, temp))
 
-# Return a list of IP Addresses based on a starting address and a wildcard mask
-def ipWildcardMask(addr, mask):
+
+def _ipWildcardMask(addr, mask):
+	'''Return a list of IP Addresses based on a starting address and a wildcard mask'''
 	_addr = list(map(int, addr.split('.')))
 	_mask = list(map(int, mask.split('.')))
 
-	if not __valid(_addr):
-		raise Exception('Invalid IP Address')
-
-	if not __valid(_mask):
-		raise Exception('Invalid IP Mask')
-
-	if _mask[1] > 127 and not __confirm():
+	if _mask[1] > 127:
 		return [] 
 
 	start = []
@@ -68,11 +59,13 @@ def ipWildcardMask(addr, mask):
 		start.append(_addr[quad] & (_mask[quad] ^ 0xFF))
 		end.append(_addr[quad] | _mask[quad])
 
-	return ipRange('.'.join(map(str, start)), '.'.join(map(str, end)))
+	return ip_range('.'.join(map(str, start))+'-'+'.'.join(map(str, end)))
 
-## http://boubakr92.wordpress.com/2012/12/20/convert-cidr-into-ip-range-with-python/
-# Return a list of IP Addresses from CIDR notation
-def ipCidr(addr):
+def cidr(addr):
+	'''
+	http://boubakr92.wordpress.com/2012/12/20/convert-cidr-into-ip-range-with-python/
+	Return a list of IP Addresses from CIDR notation
+	'''
 	_addr, _cidr = addr.split('/')
 
 	_cidr = int(_cidr)
@@ -89,10 +82,18 @@ def ipCidr(addr):
 
 	_mask = [quad ^ 0xFF for quad in _mask]
 
-	return ipWildcardMask(_addr, '.'.join(map(str, _mask)))
+	return _ipWildcardMask(_addr, '.'.join(map(str, _mask)))
 
-# Return a known regular expression, or validate a custom regular expression
+def gen_addrs(addr):
+	if '*' in addr:
+		return wildcard(addr)
+	elif '-' in addr:
+		return ip_range(addr)
+	elif '/' in addr:
+		return cidr(addr)
+
 def regex(reg = ''):
+	'''Return a known regular expression, or validate a custom regular expression'''
 	if reg.lower() == 'ictf':
 		return '(FLG\w+)'
 	elif reg.lower() == 'csaw':
@@ -108,4 +109,8 @@ def regex(reg = ''):
 			return ''
 		else:
 			return reg
-		
+
+if __name__ == '__main__':
+	print list(gen_addrs('*.1.1.1'))
+	print list(gen_addrs('1.1.1.1 - 1.1.1.80'))
+	print list(gen_addrs('1.1.1.1/24'))
