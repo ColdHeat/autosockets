@@ -3,7 +3,13 @@ import os
 import re
 
 import socket as _socket
-from socket import AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
+from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
+
+try: 
+    from socket import AF_UNIX
+except ImportError:
+    # AF_UNIX only available on UNIX. :O
+    pass
 
 try: 
     from pebble import thread
