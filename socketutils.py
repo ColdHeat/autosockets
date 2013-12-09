@@ -6,11 +6,7 @@ def wildcard(addr):
 	Ex: wildcard('1.1.1.*')
 
 	'''
-	addr = [[int(x)] if x != "*" else "*" for x in addr.split('.')]
-
-	for x in xrange(len(addr)):
-		if addr[x] == '*':
-			addr[x] = range(256)
+	addr = [[int(x)] if x != "*" else range(256) for x in addr.split('.')]
 
 	for a in addr[0]:
 		for b in addr[1]:
@@ -73,9 +69,6 @@ def cidr(addr):
 	if _cidr > 32 or _cidr < 0:
 		raise Exception('Invalid CIDR')
 
-	if _cidr < 16 and not __confirm():
-		return []
-
 	_mask = [0, 0, 0, 0]
 	for i in range(_cidr):
 		_mask[i/8] = _mask[i/8] + (1 << (7 - i % 8))
@@ -111,6 +104,6 @@ def regex(reg = ''):
 			return reg
 
 if __name__ == '__main__':
-	print list(gen_addrs('*.1.1.1'))
+	print list(gen_addrs('*.1.*.1'))
 	print list(gen_addrs('1.1.1.1 - 1.1.1.80'))
-	print list(gen_addrs('1.1.1.1/24'))
+	print list(gen_addrs('1.1.1.1/15'))
