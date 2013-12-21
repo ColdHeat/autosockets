@@ -4,9 +4,11 @@ print 'AUTOSOCKETS'
 
 s = socket('128.238.66.230',12345)
 print s.recv()
-s.send(raw_input() + '\n')
+s.send('\n')
 print s.recv()
-s.send(raw_input() + '\n')
+s.send('\n')
 print s.recv()
-s.send(raw_input() + '\n')
-print s.recv(r'I am\.')
+s.send('\n')
+print s.recv()
+
+listener(6969)

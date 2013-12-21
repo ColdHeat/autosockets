@@ -1,6 +1,7 @@
 import sys
 import os
 import re
+import time
 
 import socket as _socket
 from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
@@ -39,11 +40,37 @@ class error_hook:
                 w.write("[ERROR] " + text + "\n")
 
 sys.stdout = print_hook(sys.stdout)
-##sys.stderr = error_hook(sys.stderr)
+#sys.stderr = error_hook(sys.stderr)
 
+class listener:
+    def __init__(self, port):
+        HOST = ''
+        PORT = 6969
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+        s.bind((HOST, PORT))
+        s.listen(1)
+        while 1:
+            conn, addr = s.accept()
+            self.interact(conn, addr)
+
+    def interact(self, conn, addr):
+        command = ''
+        print "Received", addr
+
+        while (command != 'exit'):
+            command = raw_input('> ')
+            conn.send(command + '\n')
+            time.sleep(.5)
+            data = conn.recv(0x10000)
+            if not data:
+                print "Disconnected", addr
+                return
+            print data.strip(),
+        else:
+            print "Disconnected", addr
 
 class socket:
-    def __init__(self, addr, port, timeout=1, stype=AF_INET, sproto=SOCK_STREAM):
+    def __init__(self, addr, port, timeout=2, stype=AF_INET, sproto=SOCK_STREAM):
         self.s = _socket.socket(stype, sproto)
         self.s.connect((addr, port))
         self.s.settimeout(timeout)
