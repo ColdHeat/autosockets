@@ -75,7 +75,13 @@ class socket:
         self.s.connect((addr, port))
         self.s.settimeout(timeout)
 
+    def __getattr__(self, name, *args, **kwargs):
+        func = getattr(self.s, name)
+        return func
+
     def recv(self, regex=False, end='\n'):
+        if type(regex) == int or type(regex) == long:
+            return self.s.recv(regex)
         total=[]
         data='\n'
         while data != "":
