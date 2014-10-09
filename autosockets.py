@@ -12,11 +12,6 @@ except ImportError:
     # AF_UNIX only available on UNIX. :O
     pass
 
-try: 
-    from pebble import thread
-except ImportError:
-    print "Threading decorator unavailable. Install pebble with sudo pip install pebble"
-
 class print_hook:
     """ Dirty hack for overriding default print behavior """
     def __init__(self, *writers) :
@@ -39,13 +34,13 @@ class error_hook:
             if text != '\n': 
                 w.write("[ERROR] " + text + "\n")
 
-sys.stdout = print_hook(sys.stdout)
-#sys.stderr = error_hook(sys.stderr)
+# sys.stdout = print_hook(sys.stdout)
+# sys.stderr = error_hook(sys.stderr)
 
 class listener:
     def __init__(self, port):
         HOST = ''
-        PORT = 6969
+        PORT = port
         s = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
         s.bind((HOST, PORT))
         s.listen(1)
@@ -69,7 +64,7 @@ class listener:
         else:
             print "Disconnected", addr
 
-class socket:
+class socket():
     def __init__(self, addr, port, timeout=2, stype=AF_INET, sproto=SOCK_STREAM):
         self.s = _socket.socket(stype, sproto)
         self.s.connect((addr, port))
@@ -78,6 +73,12 @@ class socket:
     def __getattr__(self, name, *args, **kwargs):
         func = getattr(self.s, name)
         return func
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.s.close()
 
     def recv(self, regex=False, end='\n'):
         if type(regex) == int or type(regex) == long:
@@ -102,4 +103,3 @@ class socket:
 
     def send(self, text):
         self.s.sendall(text)
-    
